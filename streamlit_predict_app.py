@@ -95,3 +95,68 @@ if st.button("🚀 Predict Price"):
 # =================================
 st.markdown("---")
 st.write("Made with ❤️ Streamlit + Random Forest")
+
+import streamlit as st
+import pandas as pd
+import joblib
+
+# ======================================
+# 🎯 Page Setup
+# ======================================
+st.set_page_config(page_title="🏠 MEDV Predictor", page_icon="🏠")
+
+st.title("🏠 House Price Prediction App 🤖")
+
+# ======================================
+# 📦 Load Model
+# ======================================
+model = joblib.load("random_forest_regressor_model.joblib")
+
+st.success("✅ Model Loaded Successfully")
+
+# ======================================
+# ⭐ AUTO DETECT MODEL FEATURES (KEY FIX)
+# ======================================
+FEATURES = list(model.feature_names_in_)
+st.write("🔍 Model expects features:", FEATURES)
+
+
+# ======================================
+# 🎛 Sidebar Inputs
+# ======================================
+st.sidebar.header("⚙️ Enter Inputs")
+
+def user_input():
+
+    data = {}
+
+    for col in FEATURES:
+        # default slider for all features
+        data[col] = st.sidebar.number_input(f"📌 {col}", value=0.0)
+
+    df = pd.DataFrame([data])
+
+    return df
+
+
+input_df = user_input()
+
+st.subheader("📋 Input Data")
+st.dataframe(input_df)
+
+
+# ======================================
+# 🔮 Prediction
+# ======================================
+if st.button("🚀 Predict"):
+
+    try:
+        prediction = model.predict(input_df)[0]
+
+        st.balloons()
+
+        st.success(f"💰 Predicted MEDV = ${prediction:.2f}")
+
+    except Exception as e:
+        st.error("❌ Still mismatch detected")
+        st.write(e)
