@@ -2,86 +2,96 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-# =============================
-# 🎯 Page Config
-# =============================
-st.set_page_config(
-    page_title="🏠 MEDV House Price Predictor",
-    page_icon="🏠",
-    layout="wide"
-)
+# =================================
+# 🎯 Page Setup
+# =================================
+st.set_page_config(page_title="🏠 MEDV Predictor", page_icon="🏠")
 
-# =============================
-# 🎉 Title Section
-# =============================
-st.title("🏠 Boston House Price Prediction App")
-st.markdown("### 📊 Predict MEDV (Median House Value) using Machine Learning 🤖")
+st.title("🏠 Boston House Price Prediction")
+st.write("### 🤖 Random Forest MEDV Predictor with Streamlit")
 
-# =============================
+# =================================
 # 📦 Load Model
-# =============================
+# =================================
 model = joblib.load("random_forest_regressor_model.joblib")
 
-st.success("✅ Model Loaded Successfully!")
+st.success("✅ Model Loaded Successfully")
 
-# =============================
+# =================================
+# 🔑 IMPORTANT: Training column order
+# (Boston dataset original order)
+# =================================
+FEATURES = [
+    'CRIM','ZN','INDUS','CHAS','NOX','RM','AGE',
+    'DIS','RAD','TAX','PTRATIO','B','LSTAT'
+]
+
+# =================================
 # 🎛 Sidebar Inputs
-# =============================
-st.sidebar.header("⚙️ Enter House Features")
+# =================================
+st.sidebar.header("⚙️ Enter House Details")
 
-def user_input():
-
-    CRIM = st.sidebar.slider("Crime Rate (CRIM) 🚔", 0.0, 100.0, 5.0)
-    ZN = st.sidebar.slider("Residential Land (ZN) 🏘️", 0.0, 100.0, 10.0)
-    INDUS = st.sidebar.slider("Industry Area (INDUS) 🏭", 0.0, 30.0, 10.0)
-    CHAS = st.sidebar.selectbox("Near River? (CHAS) 🌊", [0, 1])
-    NOX = st.sidebar.slider("Pollution (NOX) 🌫️", 0.0, 1.0, 0.5)
-    RM = st.sidebar.slider("Rooms (RM) 🛏️", 1.0, 10.0, 5.0)
-    AGE = st.sidebar.slider("Old Houses % (AGE) 🏚️", 0.0, 100.0, 50.0)
-    DIS = st.sidebar.slider("Distance to Jobs (DIS) 🚗", 1.0, 15.0, 5.0)
-    RAD = st.sidebar.slider("Highway Access (RAD) 🛣️", 1, 25, 5)
-    TAX = st.sidebar.slider("Property Tax (TAX) 💰", 100, 800, 300)
-    PTRATIO = st.sidebar.slider("Student-Teacher Ratio (PTRATIO) 🎓", 10.0, 30.0, 18.0)
-    B = st.sidebar.slider("Black Population (B) 👥", 0.0, 400.0, 300.0)
-    LSTAT = st.sidebar.slider("Low Income % (LSTAT) 📉", 0.0, 40.0, 10.0)
+def get_user_input():
 
     data = {
-        'CRIM':[CRIM], 'ZN':[ZN], 'INDUS':[INDUS], 'CHAS':[CHAS],
-        'NOX':[NOX], 'RM':[RM], 'AGE':[AGE], 'DIS':[DIS],
-        'RAD':[RAD], 'TAX':[TAX], 'PTRATIO':[PTRATIO], 'B':[B], 'LSTAT':[LSTAT]
+        'CRIM': st.sidebar.slider("🚔 CRIM", 0.0, 100.0, 5.0),
+        'ZN': st.sidebar.slider("🏘️ ZN", 0.0, 100.0, 10.0),
+        'INDUS': st.sidebar.slider("🏭 INDUS", 0.0, 30.0, 10.0),
+        'CHAS': st.sidebar.selectbox("🌊 CHAS", [0, 1]),
+        'NOX': st.sidebar.slider("🌫️ NOX", 0.0, 1.0, 0.5),
+        'RM': st.sidebar.slider("🛏️ RM", 1.0, 10.0, 5.0),
+        'AGE': st.sidebar.slider("🏚️ AGE", 0.0, 100.0, 50.0),
+        'DIS': st.sidebar.slider("🚗 DIS", 1.0, 15.0, 5.0),
+        'RAD': st.sidebar.slider("🛣️ RAD", 1, 25, 5),
+        'TAX': st.sidebar.slider("💰 TAX", 100, 800, 300),
+        'PTRATIO': st.sidebar.slider("🎓 PTRATIO", 10.0, 30.0, 18.0),
+        'B': st.sidebar.slider("👥 B", 0.0, 400.0, 300.0),
+        'LSTAT': st.sidebar.slider("📉 LSTAT", 0.0, 40.0, 10.0)
     }
 
-    return pd.DataFrame(data)
+    df = pd.DataFrame([data])
+
+    # ⭐⭐⭐ VERY IMPORTANT FIX ⭐⭐⭐
+    # Force exact same column order
+    df = df[FEATURES]
+
+    return df
 
 
-input_df = user_input()
+input_df = get_user_input()
 
-# =============================
-# 📋 Show Input Data
-# =============================
-st.subheader("📋 Your Input Data")
-st.write(input_df)
+# =================================
+# 📋 Show Inputs
+# =================================
+st.subheader("📋 Input Data")
+st.dataframe(input_df)
 
-# =============================
+# =================================
 # 🔮 Prediction
-# =============================
-if st.button("🚀 Predict House Price"):
+# =================================
+if st.button("🚀 Predict Price"):
 
-    prediction = model.predict(input_df)[0]
+    try:
+        prediction = model.predict(input_df)[0]
 
-    st.balloons()
+        st.balloons()
 
-    st.success(f"🏆 Predicted MEDV Value: **${prediction:.2f} (in $1000s)** 💵")
+        st.success(f"🏆 Predicted MEDV = ${prediction:.2f} (in $1000s) 💵")
 
-    if prediction > 30:
-        st.info("🌟 Luxury Area!")
-    elif prediction > 20:
-        st.info("😊 Medium Price Area")
-    else:
-        st.info("🏠 Budget Friendly Area")
+        if prediction > 30:
+            st.info("🌟 Luxury Area")
+        elif prediction > 20:
+            st.info("😊 Medium Price Area")
+        else:
+            st.info("🏠 Budget Area")
 
-# =============================
+    except Exception as e:
+        st.error("❌ Feature mismatch with model.")
+        st.write("Check column names or retrain model.")
+        st.write(e)
+
+# =================================
 # Footer
-# =============================
+# =================================
 st.markdown("---")
-st.markdown("Made with ❤️ using Streamlit + Random Forest")
+st.write("Made with ❤️ Streamlit + Random Forest")
